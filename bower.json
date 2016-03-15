@@ -1,0 +1,26 @@
+{
+  "name": "news-vj-iframe-wrapper",
+  "homepage": "https://github.com/bbc/news-vj-iframe-wrapper",
+  "authors": [
+    "Chris Ashton",
+    "Patrick Asare"
+  ],
+  "description": "iframe management using Pym.js",
+  "main": "pym-manager.js",
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "iframe",
+    "pym"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
