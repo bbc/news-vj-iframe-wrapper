@@ -10,7 +10,7 @@ define([], function () {
 
     return {
 
-        wrapper: 'iframe',
+        wrapper: 'iframe', // developer shouldn't ever need this - but just in case.
 
         url: function () {
             return urlInformation;
@@ -22,10 +22,6 @@ define([], function () {
 
         onRawScroll: function (callback) {
             subscribeToHostEvent('window:scroll:raw', callback);
-        },
-
-        onCheckForElement: function (callback) {
-            subscribeToHostEvent('checkForElement', callback);
         },
 
         scrollTo: function (options) {
@@ -50,20 +46,17 @@ define([], function () {
             pymChild.sendMessage('istats', JSON.stringify(details));
         },
 
-        checkForElement: function (elm) {
-            pymChild.sendMessage('checkForElement', elm);
-        },
-
-        __iframe_init: function (pymFromIndexHtml, hostInformation) {
+        __iframe_init: function (pymFromIndexHtml, hostInformation, applicationHtml) {
             pymChild = pymFromIndexHtml;
             urlInformation = hostInformation;
             var wrapperElement = document.querySelector('.bbc-news-vj-wrapper');
             if ( !urlInformation.onbbcdomain && wrapperElement ) {
                 wrapperElement.className = wrapperElement.className.replace('bbc-news-vj-onbbcdomain', '');
             }
+
+            document.getElementById('bbc-news-vj-iframe-content-placeholder').innerHTML = applicationHtml;
         }
 
     };
 
 });
-

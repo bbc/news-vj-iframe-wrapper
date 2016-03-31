@@ -1,27 +1,33 @@
 define(function () {
 
-    var pymManager = {
+    var maximumLoadingTime = 5000,
+        applicationLoaded  = false,
+        pymManager = {
 
-        init: function (iframeUid, iframeUrl, pymPath) {
+        init: function (iframeUid, iframeUrl, pymPath, iframeCoreContentUid) {
 
             this.iframeUid = iframeUid;
 
             this.initIstatsThen(function initIframe() {
                 require([pymPath], function (pym) {
-                    var iframeContainer = document.getElementById(iframeUid);
+                    var iframeContainer      = document.getElementById(iframeUid),
+                        coreContentContainer = document.getElementById(iframeCoreContentUid);
 
-                    iframeContainer.innerHTML = '';
-                    pymManager.addLoadingSpinner(iframeContainer, iframeUid);
+                    pymManager.addLoadingSpinner(iframeContainer, iframeUid, coreContentContainer);
 
                     var pymParent = new pym.Parent(iframeUid, iframeUrl);
 
                     pymParent.onMessage('getHostInformation', function () {
                         var hostInformation = pymManager.getHostInformation();
-                        pymParent.sendMessage('sendHostInformation', JSON.stringify(hostInformation));
+                        pymParent.sendMessage('sendHostInformation', JSON.stringify({
+                            hostInformation: hostInformation,
+                            applicationHtml: coreContentContainer.innerHTML
+                        }));
                     });
 
                     pymParent.onMessage('pageLoaded', function () {
-                        pymManager.removeLoadingSpinner();
+                        iframeContainer.removeChild(coreContentContainer);
+                        pymManager.markPageAsLoaded();
                     });
 
                     pymParent.onMessage('istats', function (istatCall) {
@@ -54,10 +60,9 @@ define(function () {
                         }
                     });
 
-                    pymParent.onMessage('checkForElement', function (elm) {
-                        var elmInformation = pymManager.getElmInformation(elm);
-                        pymParent.sendMessage('checkForElement', JSON.stringify(elmInformation));
-                    });
+                    setTimeout(function () {
+                        pymManager.abortLoading(iframeContainer, coreContentContainer);
+                    }, maximumLoadingTime);
                 });
             });
 
@@ -106,7 +111,6 @@ define(function () {
         },
 
         getHostInformation: function () {
-
             var hostId        = this.getWindowLocationOrigin(),
                 urlParams     = window.location.hash || '',
                 hostUrl       = window.location.href.replace(urlParams, ''),
@@ -150,11 +154,25 @@ define(function () {
             return (token.indexOf('bbc_news_app') > -1);
         },
 
-        addLoadingSpinner: function (link, iframeUID) {
+        addLoadingSpinner: function (link, iframeUID, coreContentContainer) {
             var spinnerHolder = document.createElement('div');
             spinnerHolder.id  = iframeUID + '--bbc-news-visual-journalism-loading-spinner';
             spinnerHolder.className = 'bbc-news-visual-journalism-loading-spinner';
-            link.appendChild(spinnerHolder);
+            link.insertBefore(spinnerHolder, coreContentContainer);
+            coreContentContainer.style.opacity = '0';
+        },
+
+        markPageAsLoaded: function () {
+            applicationLoaded = true;
+            this.removeLoadingSpinner();
+        },
+
+        abortLoading: function (iframeContainer, coreContentContainer) {
+            if (!applicationLoaded) {
+                iframeContainer.removeChild(iframeContainer.querySelector('iframe'));
+                coreContentContainer.style.opacity = '1';
+                this.removeLoadingSpinner();
+            }
         },
 
         removeLoadingSpinner: function () {
@@ -178,6 +196,7 @@ define(function () {
                 },
                 optimizedScrollEvent = function () {
                     pymManager.delay(function () {
+                        console.log('delayed event fired');
                         pymManager.scrollEvent(pymParent, 'optimized');
                     }, 100);
                 };
@@ -196,21 +215,10 @@ define(function () {
                 scrollTopAsFarAsIframeIsConcerned = -rect.top;
 
             pymParent.sendMessage('window:scroll:' + type, scrollTopAsFarAsIframeIsConcerned);
-        },
-
-        getElmInformation: function (elm) {
-            var elm           = elm,
-                existence     = document.querySelector(elm) ? true : false;
-
-            return {
-                elm:           elm,
-                existence:     existence
-            };
-        },
+        }
 
     };
 
     return pymManager;
 
 });
-
