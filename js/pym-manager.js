@@ -1,12 +1,11 @@
 define(function () {
 
     var maximumLoadingTime = 5000,
-        applicationLoaded  = false,
-        pymManager = {
+        applicationLoaded  = false;
+
+    var pymManager = {
 
         init: function (iframeUid, iframeUrl, pymPath, iframeCoreContentUid) {
-
-            this.iframeUid = iframeUid;
 
             this.initIstatsThen(function initIframe() {
                 require([pymPath], function (pym) {
@@ -27,7 +26,7 @@ define(function () {
 
                     pymParent.onMessage('pageLoaded', function () {
                         iframeContainer.removeChild(coreContentContainer);
-                        pymManager.markPageAsLoaded();
+                        pymManager.markPageAsLoaded(iframeUid);
                     });
 
                     pymParent.onMessage('istats', function (istatCall) {
@@ -61,7 +60,7 @@ define(function () {
                     });
 
                     setTimeout(function () {
-                        pymManager.abortLoading(iframeContainer, coreContentContainer);
+                        pymManager.fallbackToCoreContent(iframeContainer, coreContentContainer, iframeUid);
                     }, maximumLoadingTime);
                 });
             });
@@ -154,29 +153,28 @@ define(function () {
             return (token.indexOf('bbc_news_app') > -1);
         },
 
-        addLoadingSpinner: function (link, iframeUID, coreContentContainer) {
+        addLoadingSpinner: function (link, iframeUid, coreContentContainer) {
             var spinnerHolder = document.createElement('div');
-            spinnerHolder.id  = iframeUID + '--bbc-news-visual-journalism-loading-spinner';
+            spinnerHolder.id  = iframeUid + '--bbc-news-visual-journalism-loading-spinner';
             spinnerHolder.className = 'bbc-news-visual-journalism-loading-spinner';
             link.insertBefore(spinnerHolder, coreContentContainer);
             coreContentContainer.style.opacity = '0';
         },
 
-        markPageAsLoaded: function () {
+        markPageAsLoaded: function (iframeUid) {
             applicationLoaded = true;
-            this.removeLoadingSpinner();
+            this.removeLoadingSpinner(iframeUid);
         },
 
-        abortLoading: function (iframeContainer, coreContentContainer) {
+        fallbackToCoreContent: function (iframeContainer, coreContentContainer, iframeUid) {
             if (!applicationLoaded) {
-                iframeContainer.removeChild(iframeContainer.querySelector('iframe'));
                 coreContentContainer.style.opacity = '1';
-                this.removeLoadingSpinner();
+                this.removeLoadingSpinner(iframeUid);
             }
         },
 
-        removeLoadingSpinner: function () {
-            var spinner = document.getElementById(this.iframeUid + '--bbc-news-visual-journalism-loading-spinner');
+        removeLoadingSpinner: function (iframeUid) {
+            var spinner = document.getElementById(iframeUid + '--bbc-news-visual-journalism-loading-spinner');
             spinner.parentNode.removeChild(spinner);
         },
 
