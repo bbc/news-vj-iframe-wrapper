@@ -3,6 +3,12 @@ define(function () {
     var maximumLoadingTime = 5000,
         applicationLoaded  = false;
 
+    var removeIfParent = function(node) {
+        if (node && node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+    };
+
     var pymManager = {
 
         init: function (iframeUid, iframeUrl, pymPath, iframeCoreContentUid) {
@@ -25,7 +31,7 @@ define(function () {
                     });
 
                     pymParent.onMessage('pageLoaded', function () {
-                        iframeContainer.removeChild(coreContentContainer);
+                        removeIfParent(coreContentContainer);
                         pymManager.markPageAsLoaded(iframeUid);
                     });
 
@@ -44,10 +50,6 @@ define(function () {
                         else {
                             window.scrollTo(0, scrollPosition);
                         }
-                    });
-
-                    pymParent.onMessage('window:redirectTo', function (url) {
-                        window.location = url;
                     });
 
                     pymParent.onMessage('request', function (request) {
@@ -175,7 +177,7 @@ define(function () {
 
         removeLoadingSpinner: function (iframeUid) {
             var spinner = document.getElementById(iframeUid + '--bbc-news-visual-journalism-loading-spinner');
-            spinner.parentNode.removeChild(spinner);
+            removeIfParent(spinner);
         },
 
         delay: (function () {
